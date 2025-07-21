@@ -1,0 +1,31 @@
+# PHP
+vendor/
+.phpunit.result.cache
+.php_cs.cache
+.php-cs-fixer.cache
+phpunit.xml.dist
+phpcs.xml
+phpstan.neon
+
+# IDE
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build artifacts
+build/
+coverage/
+docs/build/
+
+# Cache
+var/
+cache/
