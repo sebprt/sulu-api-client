@@ -26,19 +26,15 @@ final class ApiClient
     ) {
     }
 
-    public function getHttpClient(): HttpClientInterface
-    {
-        return $this->http;
-    }
 
     /**
-     * Factory to instantiate any generated endpoint class with the client dependencies wired.
+     * Create an endpoint instance with the client dependencies wired.
      *
      * @template T of object
      * @param class-string<T> $endpointClass
      * @return T
      */
-    public function endpoint(string $endpointClass): object
+    public function createEndpoint(string $endpointClass): object
     {
         // All generated endpoints have the same constructor signature
         return new $endpointClass(
@@ -51,10 +47,19 @@ final class ApiClient
     }
 
     /**
-     * Execute a generated endpoint by performing request(...) then parseResponse(...).
-     * This provides a simple, typed one-liner in userland code.
+     * Factory to instantiate any generated endpoint class with the client dependencies wired.
+     * @deprecated Use createEndpoint() instead. Will be removed in a future major version.
+     *
+     * @template T of object
+     * @param class-string<T> $endpointClass
+     * @return T
      */
-    public function executeEndpoint(object $endpoint, array $parameters = [], array $query = [], mixed $body = null): mixed
+
+    /**
+     * Send the request defined by the given endpoint and return the parsed response.
+     * Performs request(...) then parseResponse(...).
+     */
+    private function sendEndpointRequest(object $endpoint, array $parameters = [], array $query = [], mixed $body = null): mixed
     {
         // duck-typing against generated endpoints API: request(...): ResponseInterface and parseResponse(ResponseInterface): mixed
         /** @var callable $request */
@@ -67,17 +72,84 @@ final class ApiClient
     }
 
     /**
+     * CRUD-style helper: Create a resource using the given endpoint.
+     * Semantics are provided by the chosen endpoint (typically POST).
+     */
+    public function create(object $endpoint, array $parameters = [], array $query = [], mixed $body = null): mixed
+    {
+        return $this->sendEndpointRequest($endpoint, $parameters, $query, $body);
+    }
+
+    /**
+     * CRUD-style helper: Read a resource (or collection) using the given endpoint.
+     * Typically maps to GET endpoints; body is ignored.
+     */
+    public function read(object $endpoint, array $parameters = [], array $query = []): mixed
+    {
+        return $this->sendEndpointRequest($endpoint, $parameters, $query, null);
+    }
+
+    /**
+     * CRUD-style helper: Update a resource using the given endpoint.
+     * Semantics are provided by the chosen endpoint (typically PATCH).
+     */
+    public function update(object $endpoint, array $parameters = [], array $query = [], mixed $body = null): mixed
+    {
+        return $this->sendEndpointRequest($endpoint, $parameters, $query, $body);
+    }
+
+    /**
+     * CRUD-style helper: Upsert a resource (create or replace) using the given endpoint.
+     * Typically maps to PUT endpoints when supported by the API.
+     */
+    public function upsert(object $endpoint, array $parameters = [], array $query = [], mixed $body = null): mixed
+    {
+        return $this->sendEndpointRequest($endpoint, $parameters, $query, $body);
+    }
+
+    /**
+     * CRUD-style helper: Delete a resource using the given endpoint.
+     * Typically maps to DELETE endpoints; body is ignored.
+     */
+    public function delete(object $endpoint, array $parameters = [], array $query = []): mixed
+    {
+        return $this->sendEndpointRequest($endpoint, $parameters, $query, null);
+    }
+
+    /**
+     * CRUD-style helper: List resources using a collection endpoint.
+     * Provides a safer name than `list()` to avoid clashing with PHP language construct.
+     */
+    public function list(object $endpoint, array $parameters = [], array $query = [], ?string $embeddedKey = null, int $limit = 50): mixed
+    {
+        if ($embeddedKey !== null) {
+            // Return a paginator that will iterate across all pages using the provided embedded key
+            return $this->paginateEmbeddedCollection(
+                $endpoint,
+                embeddedKey: $embeddedKey,
+                parameters: $parameters,
+                baseQuery: $query,
+                limit: $limit,
+            );
+        }
+
+        // Fallback: single request (no pagination handling)
+        return $this->sendEndpointRequest($endpoint, $parameters, $query, null);
+    }
+
+
+    /**
      * Build a Paginator around any endpoint that supports page/limit query parameters
      * and returns a payload with optional 'total' and collection under _embedded[$embeddedKey].
      *
      * @template T of array
-     * @param object $endpoint the endpoint instance created via $this->endpoint(...)
+     * @param object $endpoint the endpoint instance created via $this->createEndpoint(...)
      * @param string $embeddedKey key inside _embedded where items live, e.g. 'tags'
      * @param array<string,mixed> $parameters path/format parameters for the endpoint
      * @param array<string,mixed> $baseQuery base query to always pass (besides page & limit)
      * @return Paginator<T>
      */
-    public function paginateEndpoint(object $endpoint, string $embeddedKey, array $parameters = [], array $baseQuery = [], int $limit = 50): Paginator
+    private function paginateEmbeddedCollection(object $endpoint, string $embeddedKey, array $parameters = [], array $baseQuery = [], int $limit = 50): Paginator
     {
         return new Paginator(
             limit: $limit,
@@ -103,40 +175,5 @@ final class ApiClient
                 return new Page($items, $page, $limit, $total);
             }
         );
-    }
-
-    /**
-     * Convenience to wrap a custom pageFetcher into a Paginator.
-     *
-     * @param callable(int $page, int $limit): Page $pageFetcher
-     */
-    public function paginate(int $limit, callable $pageFetcher): Paginator
-    {
-        return new Paginator($limit, $pageFetcher);
-    }
-
-    /**
-     * @return array<string,mixed>|list<mixed>|null
-     */
-    private function handleJsonResponse(ResponseInterface $response): array|null
-    {
-        $status = $response->getStatusCode();
-        $body = (string)$response->getBody();
-        $data = $body !== '' ? $this->serializer->deserialize($body, 'json') : null;
-
-        if ($status >= 200 && $status < 300) {
-            return is_array($data) ? $data : null;
-        }
-
-        if ($status === 404) {
-            throw new NotFoundException('Resource not found', 404);
-        }
-        if ($status === 422 || $status === 400) {
-            $errors = is_array($data) ? $data : null;
-            throw new ValidationException('Validation error', $status, null, $errors);
-        }
-
-        $message = is_array($data) && isset($data['message']) ? (string)$data['message'] : 'API Error';
-        throw new ApiException($message, $status);
     }
 }
