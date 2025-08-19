@@ -6,7 +6,6 @@ namespace Sulu\ApiClient\Endpoint;
 
 final class SuluGetMediaFormatsEndpoint extends AbstractEndpoint
 {
-    public const OPERATION_ID = 'sulu-media-get-media-formats-get';
 
     protected const METHOD = 'GET';
     protected const PATH_TEMPLATE = '/admin/api/media/{id}/formats.{_format}';

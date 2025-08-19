@@ -6,7 +6,6 @@ namespace Sulu\ApiClient\Endpoint;
 
 final class SuluGetAccountDeleteinfoEndpoint extends AbstractEndpoint
 {
-    public const OPERATION_ID = 'sulu-contact-get-account-deleteinfo-get';
 
     protected const METHOD = 'GET';
     protected const PATH_TEMPLATE = '/admin/api/accounts/{id}/deleteinfo.{_format}';

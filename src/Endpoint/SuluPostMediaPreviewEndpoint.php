@@ -6,7 +6,6 @@ namespace Sulu\ApiClient\Endpoint;
 
 final class SuluPostMediaPreviewEndpoint extends AbstractEndpoint
 {
-    public const OPERATION_ID = 'sulu-media-post-media-preview-post';
 
     protected const METHOD = 'POST';
     protected const PATH_TEMPLATE = '/admin/api/media/{id}/preview.{_format}';

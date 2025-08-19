@@ -6,7 +6,6 @@ namespace Sulu\ApiClient\Endpoint;
 
 final class SuluDeleteRoutesEndpoint extends AbstractEndpoint
 {
-    public const OPERATION_ID = 'sulu-routes-delete-routes-delete';
 
     protected const METHOD = 'DELETE';
     protected const PATH_TEMPLATE = '/admin/api/routes.{_format}';

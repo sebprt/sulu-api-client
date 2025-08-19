@@ -6,7 +6,6 @@ namespace Sulu\ApiClient\Endpoint;
 
 final class SuluDeleteMediaEndpoint extends AbstractEndpoint
 {
-    public const OPERATION_ID = 'sulu-media-delete-media-delete';
 
     protected const METHOD = 'DELETE';
     protected const PATH_TEMPLATE = '/admin/api/media/{id}.{_format}';

@@ -6,7 +6,6 @@ namespace Sulu\ApiClient\Endpoint;
 
 final class SuluDeleteAccountEndpoint extends AbstractEndpoint
 {
-    public const OPERATION_ID = 'sulu-contact-delete-account-delete';
 
     protected const METHOD = 'DELETE';
     protected const PATH_TEMPLATE = '/admin/api/accounts/{id}.{_format}';

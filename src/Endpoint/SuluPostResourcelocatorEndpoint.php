@@ -6,7 +6,6 @@ namespace Sulu\ApiClient\Endpoint;
 
 final class SuluPostResourcelocatorEndpoint extends AbstractEndpoint
 {
-    public const OPERATION_ID = 'sulu-page-post-resourcelocator-post';
 
     protected const METHOD = 'POST';
     protected const PATH_TEMPLATE = '/admin/api/resourcelocators.{_format}';
