@@ -31,7 +31,7 @@ use Sulu\ApiClient\Serializer\SerializerInterface;
  * Concrete endpoints should define PATH_TEMPLATE and METHOD and may override
  * parseResponse if they need custom parsing.
  */
-abstract class AbstractEndpoint
+abstract class AbstractEndpoint implements EndpointInterface
 {
     /** @var string HTTP method (GET, POST, DELETE, ...) */
     protected const METHOD = 'GET';

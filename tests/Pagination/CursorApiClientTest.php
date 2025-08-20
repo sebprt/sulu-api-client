@@ -4,18 +4,22 @@ declare(strict_types=1);
 
 namespace Sulu\ApiClient\Tests\Pagination;
 
-use Nyholm\Psr7\Factory\Psr17Factory;
-use Nyholm\Psr7\Response;
 use PHPUnit\Framework\TestCase;
 use Sulu\ApiClient\ApiClient;
 use Sulu\ApiClient\Auth\RequestAuthenticatorInterface;
 use Sulu\ApiClient\Serializer\SerializerInterface;
+use Sulu\ApiClient\Tests\Fixtures\SimpleResponse;
 
 final class CursorApiClientTest extends TestCase
 {
     public function testPaginateEmbeddedCursorCollectionIteratesAllItems(): void
     {
-        $psr17 = new Psr17Factory();
+        $psr17 = new class () implements \Psr\Http\Message\RequestFactoryInterface {
+                    public function createRequest(string $method, $uri): \Psr\Http\Message\RequestInterface
+                    {
+                        throw new \RuntimeException('RequestFactory not used in this test');
+                    }
+                };
         $http = new class () implements \Psr\Http\Client\ClientInterface {
             public function sendRequest(\Psr\Http\Message\RequestInterface $request): \Psr\Http\Message\ResponseInterface
             {
@@ -43,7 +47,7 @@ final class CursorApiClientTest extends TestCase
         $client = new ApiClient($http, $psr17, $serializer, $auth, 'https://example.test');
 
         // A simple duck-typed endpoint with request/parseResponse methods
-        $endpoint = new class () {
+        $endpoint = new class () implements \Sulu\ApiClient\Endpoint\EndpointInterface { 
             private array $pages = [
                 null => [
                     '_embedded' => ['items' => [1, 2]],
@@ -55,12 +59,12 @@ final class CursorApiClientTest extends TestCase
                 ],
             ];
 
-            public function request(array $parameters, array $query, mixed $body): \Psr\Http\Message\ResponseInterface
+            public function request(array $parameters = [], array $query = [], mixed $body = null): \Psr\Http\Message\ResponseInterface
             {
                 $cursor = $query['cursor'] ?? null;
                 $data = $this->pages[$cursor] ?? ['_embedded' => ['items' => []], 'nextCursor' => null];
 
-                return new Response(200, ['Content-Type' => 'application/json'], json_encode($data));
+                return new SimpleResponse(200, ['Content-Type' => 'application/json'], json_encode($data));
             }
 
             public function parseResponse(\Psr\Http\Message\ResponseInterface $response): mixed

@@ -8,6 +8,7 @@ use Psr\Http\Client\ClientInterface as HttpClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Sulu\ApiClient\Auth\RequestAuthenticatorInterface;
+use Sulu\ApiClient\Endpoint\EndpointInterface;
 use Sulu\ApiClient\Pagination\CursorPage;
 use Sulu\ApiClient\Pagination\CursorPaginator;
 use Sulu\ApiClient\Serializer\SerializerInterface;
@@ -45,24 +46,13 @@ final class ApiClient
     }
 
     /**
-     * Factory to instantiate any generated endpoint class with the client dependencies wired.
-     *
-     * @deprecated Use createEndpoint() instead. Will be removed in a future major version.
-     *
-     * @template T of object
-     *
-     * @return T
-     */
-
-    /**
      * Send the request defined by the given endpoint and return the parsed response.
      * Performs request(...) then parseResponse(...).
-     */
-    /**
+     *
      * @param array<string, mixed> $parameters
      * @param array<string, mixed> $query
      */
-    private function sendEndpointRequest(object $endpoint, array $parameters = [], array $query = [], mixed $body = null): mixed
+    private function sendEndpointRequest(EndpointInterface $endpoint, array $parameters = [], array $query = [], mixed $body = null): mixed
     {
         // duck-typing against generated endpoints API: request(...): ResponseInterface and parseResponse(ResponseInterface): mixed
         /** @var callable $request */
@@ -82,7 +72,7 @@ final class ApiClient
      * @param array<string, mixed> $parameters
      * @param array<string, mixed> $query
      */
-    public function create(object $endpoint, array $parameters = [], array $query = [], mixed $body = null): mixed
+    public function create(EndpointInterface $endpoint, array $parameters = [], array $query = [], mixed $body = null): mixed
     {
         return $this->sendEndpointRequest($endpoint, $parameters, $query, $body);
     }
@@ -94,7 +84,7 @@ final class ApiClient
      * @param array<string, mixed> $parameters
      * @param array<string, mixed> $query
      */
-    public function read(object $endpoint, array $parameters = [], array $query = []): mixed
+    public function read(EndpointInterface $endpoint, array $parameters = [], array $query = []): mixed
     {
         return $this->sendEndpointRequest($endpoint, $parameters, $query, null);
     }
@@ -106,7 +96,7 @@ final class ApiClient
      * @param array<string, mixed> $parameters
      * @param array<string, mixed> $query
      */
-    public function update(object $endpoint, array $parameters = [], array $query = [], mixed $body = null): mixed
+    public function update(EndpointInterface $endpoint, array $parameters = [], array $query = [], mixed $body = null): mixed
     {
         return $this->sendEndpointRequest($endpoint, $parameters, $query, $body);
     }
@@ -118,7 +108,7 @@ final class ApiClient
      * @param array<string, mixed> $parameters
      * @param array<string, mixed> $query
      */
-    public function upsert(object $endpoint, array $parameters = [], array $query = [], mixed $body = null): mixed
+    public function upsert(EndpointInterface $endpoint, array $parameters = [], array $query = [], mixed $body = null): mixed
     {
         return $this->sendEndpointRequest($endpoint, $parameters, $query, $body);
     }
@@ -130,7 +120,7 @@ final class ApiClient
      * @param array<string, mixed> $parameters
      * @param array<string, mixed> $query
      */
-    public function delete(object $endpoint, array $parameters = [], array $query = []): mixed
+    public function delete(EndpointInterface $endpoint, array $parameters = [], array $query = []): mixed
     {
         return $this->sendEndpointRequest($endpoint, $parameters, $query, null);
     }
@@ -142,7 +132,7 @@ final class ApiClient
      * @param array<string, mixed> $parameters
      * @param array<string, mixed> $query
      */
-    public function list(object $endpoint, array $parameters = [], array $query = [], ?string $embeddedKey = null, int $limit = 50): mixed
+    public function list(EndpointInterface $endpoint, array $parameters = [], array $query = [], ?string $embeddedKey = null, int $limit = 50): mixed
     {
         if (null !== $embeddedKey) {
             // Return a cursor paginator that will iterate across all pages using the provided embedded key
@@ -172,7 +162,7 @@ final class ApiClient
      *
      * @return CursorPaginator<array<string,mixed>>
      */
-    public function paginateEmbeddedCursorCollection(object $endpoint, string $embeddedKey, array $parameters = [], array $baseQuery = [], int $limit = 50, ?string $initialCursor = null): CursorPaginator
+    public function paginateEmbeddedCursorCollection(EndpointInterface $endpoint, string $embeddedKey, array $parameters = [], array $baseQuery = [], int $limit = 50, ?string $initialCursor = null): CursorPaginator
     {
         return new CursorPaginator(
             limit: $limit,
