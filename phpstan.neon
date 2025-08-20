@@ -4,4 +4,3 @@ parameters:
     - src
   checkGenericClassInNonGenericObjectType: true
   reportUnmatchedIgnoredErrors: true
-  resultCachePath: var/phpstan/resultCache.php
