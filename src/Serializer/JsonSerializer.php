@@ -18,7 +18,7 @@ final class JsonSerializer implements SerializerInterface
         if ('json' !== $format) {
             throw new \InvalidArgumentException('Only json format is supported');
         }
-        $json = json_encode($data, $this->encodeFlags, $this->depth);
+        $json = json_encode($data, $this->encodeFlags, max(1, $this->depth));
         if (($this->encodeFlags & JSON_THROW_ON_ERROR) === 0) {
             $err = json_last_error();
             if (JSON_ERROR_NONE !== $err) {
@@ -37,7 +37,7 @@ final class JsonSerializer implements SerializerInterface
         if ('' === $payload) {
             return null;
         }
-        $decoded = json_decode($payload, true, $this->depth, $this->decodeFlags);
+        $decoded = json_decode($payload, true, max(1, $this->depth), $this->decodeFlags);
         if (($this->decodeFlags & JSON_THROW_ON_ERROR) === 0) {
             $err = json_last_error();
             if (JSON_ERROR_NONE !== $err) {

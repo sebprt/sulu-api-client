@@ -45,10 +45,6 @@ final class CursorPaginator implements \IteratorAggregate
                 break;
             }
 
-            // Early escape when first page returns zero items and no nextCursor
-            if ($cursor === $this->initialCursor && null === $page->nextCursor && 0 === count($page->items)) {
-                break;
-            }
 
             $cursor = $page->nextCursor;
         }

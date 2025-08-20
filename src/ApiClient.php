@@ -154,7 +154,7 @@ final class ApiClient
      * and returns a payload with the collection under _embedded[$embeddedKey] and a next cursor
      * at either top-level 'nextCursor', under _links.next.cursor, or within _links.next.href query.
      *
-     * @param object              $endpoint      the endpoint instance created via $this->createEndpoint(...)
+     * @param EndpointInterface   $endpoint      the endpoint instance created via $this->createEndpoint(...)
      * @param string              $embeddedKey   key inside _embedded where items live, e.g. 'tags'
      * @param array<string,mixed> $parameters    path/format parameters for the endpoint
      * @param array<string,mixed> $baseQuery     base query to always pass (besides cursor & limit)

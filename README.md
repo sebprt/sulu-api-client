@@ -2,13 +2,6 @@
 
 This package provides an API client for interacting with the Sulu API.
 
-Highlights:
-- PHP >= 8.2
-- Works with Symfony HttpClient and most PHP HTTP clients
-- Symfony Serializer (placeholder JSON serializer provided)
-- Typed endpoints and DTOs, authenticators (Bearer)
-- Pagination features
-
 ## Installation
 
 ```
