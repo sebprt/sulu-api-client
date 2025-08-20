@@ -127,12 +127,11 @@ final readonly class ApiClient
 
     /**
      * CRUD-style helper: List resources using a collection endpoint.
-     * Provides a safer name than `list()` to avoid clashing with PHP language construct.
      *
      * @param array<string, mixed> $parameters
      * @param array<string, mixed> $query
      */
-    public function list(EndpointInterface $endpoint, array $parameters = [], array $query = [], ?string $embeddedKey = null, int $limit = 50): mixed
+    public function collection(EndpointInterface $endpoint, array $parameters = [], array $query = [], ?string $embeddedKey = null, int $limit = 50): mixed
     {
         if (null !== $embeddedKey) {
             // Return a cursor paginator that will iterate across all pages using the provided embedded key

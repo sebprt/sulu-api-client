@@ -47,10 +47,10 @@ $tags = $client->read($endpoint, parameters: ['_format' => 'json'], query: ['pag
 
 // List (GET collection)
 // Single page (no pagination handling):
-$tagsList = $client->list($endpoint, parameters: ['_format' => 'json'], query: ['page' => 1, 'limit' => 50]);
+$tagsList = $client->collection($endpoint, parameters: ['_format' => 'json'], query: ['page' => 1, 'limit' => 50]);
 
-// Or handle pagination directly via list(): provide the embedded collection key to get a cursor paginator
-$cursor = $client->list($endpoint, parameters: ['_format' => 'json'], query: [], embeddedKey: 'tags', limit: 50);
+// Or handle pagination directly via collection(): provide the embedded collection key to get a cursor paginator
+$cursor = $client->collection($endpoint, parameters: ['_format' => 'json'], query: [], embeddedKey: 'tags', limit: 50);
 foreach ($cursor as $tag) {
     // iterate across all items using cursor-based pagination
 }

@@ -101,7 +101,7 @@ final class ApiClientTest extends TestCase
             public function parseResponse(ResponseInterface $response): mixed { return json_decode((string) $response->getBody(), true); }
         };
 
-        $paginator = $client->list($endpoint, [], [], embeddedKey: 'items', limit: 2);
+        $paginator = $client->collection($endpoint, [], [], embeddedKey: 'items', limit: 2);
         $items = iterator_to_array($paginator);
 
         self::assertSame([1, 2, 3], $items);
