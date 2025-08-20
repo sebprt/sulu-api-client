@@ -1,14 +1,13 @@
-# Sulu API Client (OpenAPI-synchronized)
+# Sulu API Client
 
-This package provides a PSR-compliant API client with optional generation/synchronization from an OpenAPI contract.
+This package provides an API client for interacting with the Sulu API.
 
 Highlights:
-- PHP >= 8.2, PSR-1/4/12, PSR-18
-- Symfony HttpClient or any PSR-18 client
+- PHP >= 8.2
+- Works with Symfony HttpClient and most PHP HTTP clients
 - Symfony Serializer (placeholder JSON serializer provided)
-- Typed endpoints and DTOs (skeletons), authenticators (Bearer)
-- Pagination abstractions
-- Strict sync script to detect obsolete endpoints
+- Typed endpoints and DTOs, authenticators (Bearer)
+- Pagination features
 
 ## Installation
 
@@ -16,10 +15,10 @@ Highlights:
 composer require sebprt/sulu-api-client
 ```
 
-This library relies on PSR-18/PSR-7/17 and php-http/discovery to find implementations. For a ready-to-run setup, consider installing:
-- nyholm/psr7 (PSR-7/17) and symfony/http-client (PSR-18)
+This library uses standard interfaces for HTTP messages and clients, and php-http/discovery to find installed packages. For a ready-to-run setup, consider installing:
+- nyholm/psr7 and symfony/http-client
 
-Alternatively, inject your own RequestFactory and HttpClient instances.
+Alternatively, you can inject your own RequestFactory and HttpClient instances.
 
 ## Usage
 
@@ -128,4 +127,4 @@ foreach ($cursorPaginator as $tag) {
 
 - PHPStan level max
 - Rector config for PHP 8.2
-- PSR-12 coding standard
+- Coding style follows widely adopted PHP conventions

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Sulu\ApiClient\Exception;
 
-use Exception;
-
 /**
  * Exception thrown when an API request fails.
  */
