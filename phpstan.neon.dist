@@ -1,0 +1,9 @@
+parameters:
+  level: max
+  paths:
+    - src
+  checkGenericClassInNonGenericObjectType: true
+  checkMissingCallableSignature: true
+  checkUninitializedProperties: true
+  treatPhpDocTypesAsCertain: true
+  ignoreErrors: []
