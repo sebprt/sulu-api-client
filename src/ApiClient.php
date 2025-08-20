@@ -9,6 +9,8 @@ use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Sulu\ApiClient\Auth\RequestAuthenticatorInterface;
 use Sulu\ApiClient\Endpoint\EndpointInterface;
+use Sulu\ApiClient\Endpoint\Helper\ContentTypeMatcherInterface;
+use Sulu\ApiClient\Endpoint\Helper\DefaultContentTypeMatcher;
 use Sulu\ApiClient\Pagination\CursorPage;
 use Sulu\ApiClient\Pagination\CursorPaginator;
 use Sulu\ApiClient\Serializer\SerializerInterface;
@@ -21,6 +23,7 @@ final readonly class ApiClient
         private SerializerInterface $serializer,
         private RequestAuthenticatorInterface $authenticator,
         private string $baseUrl,
+        private ContentTypeMatcherInterface $contentTypeMatcher = new DefaultContentTypeMatcher(),
     ) {
     }
 
@@ -41,6 +44,7 @@ final readonly class ApiClient
             $this->requestFactory,
             $this->serializer,
             $this->authenticator,
+            $this->contentTypeMatcher,
             $this->baseUrl,
         );
     }

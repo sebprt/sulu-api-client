@@ -9,21 +9,8 @@ namespace Sulu\ApiClient\Exception;
  */
 class ApiException extends \Exception
 {
-    /**
-     * @param array<string, mixed>|null $responseData
-     */
-    public function __construct(string $message = '', int $code = 0, ?\Throwable $previous = null, private readonly ?array $responseData = null)
+    public function __construct(string $message = '', int $code = 0)
     {
-        parent::__construct($message, $code, $previous);
-    }
-
-    /**
-     * Get the response data if available.
-     *
-     * @return array<string, mixed>|null
-     */
-    public function getResponseData(): ?array
-    {
-        return $this->responseData;
+        parent::__construct($message, $code);
     }
 }

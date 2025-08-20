@@ -6,8 +6,8 @@ namespace Sulu\ApiClient\Exception;
 
 class PreconditionFailedException extends ApiException
 {
-    public function __construct(string $message = 'Precondition Failed', int $code = 412, ?\Throwable $previous = null, ?array $responseData = null)
+    public function __construct(string $message = 'Precondition Failed', int $code = 412)
     {
-        parent::__construct($message, $code, $previous, $responseData);
+        parent::__construct($message, $code);
     }
 }

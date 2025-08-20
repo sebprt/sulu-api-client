@@ -22,6 +22,7 @@ use Sulu\ApiClient\Exception\UnexpectedResponseException;
 use Sulu\ApiClient\Exception\UnsupportedMediaTypeException;
 use Sulu\ApiClient\Exception\ValidationException;
 use Sulu\ApiClient\Serializer\SerializerInterface;
+use Sulu\ApiClient\Endpoint\Helper\DefaultContentTypeMatcher;
 
 final class AbstractEndpointTest extends TestCase
 {
@@ -43,7 +44,7 @@ final class AbstractEndpointTest extends TestCase
         $serializer = $this->serializer();
         $auth = new BearerTokenAuthenticator('t0ken');
 
-        return new class ($http, $psr17, $serializer, $auth, 'https://api.test') extends AbstractEndpoint {
+        return new class ($http, $psr17, $serializer, $auth, new DefaultContentTypeMatcher(), 'https://api.test') extends AbstractEndpoint {
             protected const METHOD = 'POST';
             protected const PATH_TEMPLATE = '/a/{id}.{_format}';
         };
@@ -168,6 +169,7 @@ final class AbstractEndpointTest extends TestCase
             new class implements \Psr\Http\Message\RequestFactoryInterface { public function createRequest(string $method, $uri): \Psr\Http\Message\RequestInterface { return new SimpleRequest($method, (string) $uri); } },
             $this->serializer(),
             new BearerTokenAuthenticator('t'),
+            new DefaultContentTypeMatcher(),
             'https://api.test'
         ) extends AbstractEndpoint {
             protected const METHOD = 'GET';
@@ -188,6 +190,7 @@ final class AbstractEndpointTest extends TestCase
             new class implements \Psr\Http\Message\RequestFactoryInterface { public function createRequest(string $method, $uri): \Psr\Http\Message\RequestInterface { return new SimpleRequest($method, (string) $uri); } },
             $this->serializer(),
             new BearerTokenAuthenticator('t'),
+            new DefaultContentTypeMatcher(),
             'https://api.test'
         ) extends AbstractEndpoint {
             protected const METHOD = 'GET';

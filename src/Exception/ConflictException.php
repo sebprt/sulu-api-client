@@ -6,8 +6,8 @@ namespace Sulu\ApiClient\Exception;
 
 class ConflictException extends ApiException
 {
-    public function __construct(string $message = 'Conflict', int $code = 409, ?\Throwable $previous = null, ?array $responseData = null)
+    public function __construct(string $message = 'Conflict', int $code = 409)
     {
-        parent::__construct($message, $code, $previous, $responseData);
+        parent::__construct($message, $code);
     }
 }

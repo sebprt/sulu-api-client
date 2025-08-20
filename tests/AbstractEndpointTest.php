@@ -12,6 +12,7 @@ use Sulu\ApiClient\Auth\BearerTokenAuthenticator;
 use Sulu\ApiClient\Endpoint\AbstractEndpoint;
 use Sulu\ApiClient\Exception\ValidationException;
 use Sulu\ApiClient\Serializer\JsonSerializer;
+use Sulu\ApiClient\Endpoint\Helper\DefaultContentTypeMatcher;
 use Sulu\ApiClient\Tests\Fixtures\SimpleRequest;
 use Sulu\ApiClient\Tests\Fixtures\SimpleResponse;
 
@@ -25,7 +26,7 @@ final class AbstractEndpointTest extends TestCase
         $serializer = new JsonSerializer();
         $auth = new BearerTokenAuthenticator('test');
 
-        return new class($http, $requestFactory, $serializer, $auth, 'https://example.test') extends AbstractEndpoint {
+        return new class($http, $requestFactory, $serializer, $auth, new DefaultContentTypeMatcher(), 'https://example.test') extends AbstractEndpoint {
             protected const METHOD = 'POST';
             protected const PATH_TEMPLATE = '/admin/api/example.{_format}';
         };

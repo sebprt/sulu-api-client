@@ -6,8 +6,8 @@ namespace Sulu\ApiClient\Exception;
 
 class MethodNotAllowedException extends ApiException
 {
-    public function __construct(string $message = 'Method Not Allowed', int $code = 405, ?\Throwable $previous = null, ?array $responseData = null)
+    public function __construct(string $message = 'Method Not Allowed', int $code = 405)
     {
-        parent::__construct($message, $code, $previous, $responseData);
+        parent::__construct($message, $code);
     }
 }

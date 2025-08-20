@@ -10,6 +10,8 @@ use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 use Sulu\ApiClient\Auth\RequestAuthenticatorInterface;
+use Sulu\ApiClient\Endpoint\Helper\ContentTypeMatcherInterface;
+use Sulu\ApiClient\Exception\ApiException;
 use Sulu\ApiClient\Exception\ConflictException;
 use Sulu\ApiClient\Exception\ForbiddenException;
 use Sulu\ApiClient\Exception\InvalidJsonException;
@@ -44,67 +46,9 @@ abstract class AbstractEndpoint implements EndpointInterface
         private readonly RequestFactoryInterface $requestFactory,
         private readonly SerializerInterface $serializer,
         private readonly RequestAuthenticatorInterface $authenticator,
+        private readonly ContentTypeMatcherInterface $contentTypeMatcher,
         private readonly string $baseUrl,
     ) {
-    }
-
-    /**
-     * Default content type when serializing non-stream bodies.
-     * Subclasses can override to change default.
-     */
-    protected function defaultContentType(): string
-    {
-        return 'application/json';
-    }
-
-    /**
-     * Helper to attach a JSON body using the endpoint serializer.
-     * Note: GET/HEAD requests must not include a body per RFC and will be ignored.
-     */
-    protected function withJsonBody(\Psr\Http\Message\RequestInterface $request, mixed $body): \Psr\Http\Message\RequestInterface
-    {
-        $method = strtoupper($request->getMethod());
-        if ('GET' === $method || 'HEAD' === $method) {
-            return $request;
-        }
-
-        if ($body instanceof StreamInterface) {
-            return $request->withBody($body);
-        }
-
-        $payload = $this->serializer->serialize($body, 'json');
-        $stream = $request->getBody();
-        if ($stream->isWritable()) {
-            $stream->write($payload);
-        }
-
-        return $request->withHeader('Content-Type', $this->defaultContentType());
-    }
-
-    private function isJsonContentType(string $contentType): bool
-    {
-        $media = strtolower(trim(explode(';', $contentType)[0]));
-
-        return 'application/json' === $media || 'application/problem+json' === $media || str_ends_with($media, '+json');
-    }
-
-    private function messageFromProblemJson(string $default, mixed $data): string
-    {
-        if (is_array($data)) {
-            $title = isset($data['title']) ? (string) $data['title'] : null;
-            $detail = isset($data['detail']) ? (string) $data['detail'] : null;
-            if (null !== $title && null !== $detail && '' !== $title && '' !== $detail) {
-                return $title.': '.$detail;
-            }
-            if (null !== $title && '' !== $title) {
-                return $title;
-            }
-            if (null !== $detail && '' !== $detail) {
-                return $detail;
-            }
-        }
-
-        return $default;
     }
 
     /**
@@ -150,7 +94,7 @@ abstract class AbstractEndpoint implements EndpointInterface
                 }
                 // Only set Content-Type if not already provided by the caller
                 if ('' === $request->getHeaderLine('Content-Type')) {
-                    $request = $request->withHeader('Content-Type', $this->defaultContentType());
+                    $request = $request->withHeader('Content-Type', 'application/json');
                 }
             }
         }
@@ -175,7 +119,7 @@ abstract class AbstractEndpoint implements EndpointInterface
         $contentType = $response->getHeaderLine('Content-Type');
 
         $data = null;
-        $isJson = $this->isJsonContentType($contentType);
+        $isJson = $this->contentTypeMatcher->isJson($contentType);
         if ('' !== $body && $isJson) {
             try {
                 $data = $this->serializer->deserialize($body, 'json');
@@ -206,74 +150,55 @@ abstract class AbstractEndpoint implements EndpointInterface
             return $body;
         }
 
-        // Specific client errors
+        $status = $response->getStatusCode();
         if (400 === $status) {
-            $errors = is_array($data) ? $data : null;
-            $message = $this->messageFromProblemJson('Bad Request', $data);
-            throw new ValidationException($message, 400, null, $errors);
+            throw new ValidationException('Bad Request', $status);
         }
+
         if (401 === $status) {
-            $message = $this->messageFromProblemJson('Unauthorized', $data);
-            throw new UnauthorizedException($message, 401, null, is_array($data) ? $data : null);
+            throw new UnauthorizedException('Unauthorized', $status);
         }
+
         if (403 === $status) {
-            $message = $this->messageFromProblemJson('Forbidden', $data);
-            throw new ForbiddenException($message, 403, null, is_array($data) ? $data : null);
+            throw new ForbiddenException('Forbidden', $status);
         }
+
         if (404 === $status) {
-            $message = $this->messageFromProblemJson('Resource not found', $data);
-            throw new NotFoundException($message, 404, null, is_array($data) ? $data : null);
+            throw new NotFoundException('Resource not found', $status);
         }
+
         if (405 === $status) {
-            $message = $this->messageFromProblemJson('Method Not Allowed', $data);
-            throw new MethodNotAllowedException($message, 405, null, is_array($data) ? $data : null);
+            throw new MethodNotAllowedException('Method Not Allowed', $status);
         }
+
         if (409 === $status) {
-            $message = $this->messageFromProblemJson('Conflict', $data);
-            throw new ConflictException($message, 409, null, is_array($data) ? $data : null);
+            throw new ConflictException('Conflict', $status);
         }
+
         if (412 === $status) {
-            $message = $this->messageFromProblemJson('Precondition Failed', $data);
-            throw new PreconditionFailedException($message, 412, null, is_array($data) ? $data : null);
+            throw new PreconditionFailedException('Precondition Failed', $status);
         }
+
         if (415 === $status) {
-            $message = $this->messageFromProblemJson('Unsupported Media Type', $data);
-            throw new UnsupportedMediaTypeException($message, 415, null, is_array($data) ? $data : null);
+            throw new UnsupportedMediaTypeException('Unsupported Media Type', $status);
         }
+
         if (422 === $status) {
-            $errors = is_array($data) ? $data : null;
-            $message = $this->messageFromProblemJson('Validation error', $data);
-            throw new ValidationException($message, 422, null, $errors);
+            throw new ValidationException('Validation error', $status);
         }
+
         if (429 === $status) {
-            $retryAfter = $response->getHeaderLine('Retry-After');
-            $base = $this->messageFromProblemJson('Too Many Requests', $data);
-            $msg = $base.('' !== $retryAfter ? ('; retry after '.$retryAfter) : '');
-            throw new TooManyRequestsException($msg, 429, null, is_array($data) ? $data : null);
+            throw new TooManyRequestsException('Too Many Requests. Retry later', 429);
         }
 
-        // Redirection not expected in API client usage
         if ($status >= 300 && $status < 400) {
-            $message = $this->messageFromProblemJson('Unexpected redirection', $data);
-            throw new RedirectionException($message, $status, null, is_array($data) ? $data : null);
+            throw new RedirectionException('Unexpected redirection', $status);
         }
 
-        // Server errors
         if ($status >= 500 && $status < 600) {
-            $message = $this->messageFromProblemJson('Server error', $data);
-            if ('Server error' === $message && is_array($data) && isset($data['message'])) {
-                $message = (string) $data['message'];
-            } elseif ('' !== $body && null === $data) {
-                $message = 'Server error: '.substr($body, 0, 2000);
-            }
-            throw new ServerErrorException($message, $status, null, is_array($data) ? $data : null);
+            throw new ServerErrorException('Server error', $status);
         }
 
-        // Fallback for any other unexpected status
-        $message = $this->messageFromProblemJson('API error', $data);
-        if ('API error' === $message && is_array($data) && isset($data['message'])) {
-            $message = (string) $data['message'];
-        }
-        throw new UnexpectedResponseException($message, $status, null, is_array($data) ? $data : null);
+        throw new ApiException( 'API error', $status);
     }
 }
