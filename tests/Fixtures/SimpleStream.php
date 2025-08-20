@@ -8,15 +8,13 @@ use Psr\Http\Message\StreamInterface;
 
 final class SimpleStream implements StreamInterface
 {
-    private string $content;
     private bool $seekable = true;
     private bool $readable = true;
     private bool $writable = true;
     private int $position = 0;
 
-    public function __construct(string $content = '')
+    public function __construct(private string $content = '')
     {
-        $this->content = $content;
     }
 
     public function __toString(): string { return $this->content; }

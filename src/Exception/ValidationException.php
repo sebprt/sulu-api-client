@@ -7,7 +7,7 @@ namespace Sulu\ApiClient\Exception;
 class ValidationException extends ApiException
 {
     /** @var array<string, mixed>|null */
-    private ?array $errors;
+    private readonly ?array $errors;
 
     /**
      * @param array<string, mixed>|null $errors

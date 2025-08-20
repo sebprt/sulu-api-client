@@ -9,7 +9,6 @@ use Psr\Http\Message\StreamInterface;
 
 class SimpleResponse implements ResponseInterface
 {
-    private int $statusCode;
     private string $reasonPhrase = '';
     /** @var array<string, list<string>> */
     private array $headers = [];
@@ -19,9 +18,8 @@ class SimpleResponse implements ResponseInterface
     /**
      * @param array<string, string|string[]> $headers
      */
-    public function __construct(int $statusCode = 200, array $headers = [], string $body = '')
+    public function __construct(private int $statusCode = 200, array $headers = [], string $body = '')
     {
-        $this->statusCode = $statusCode;
         foreach ($headers as $name => $value) {
             $this->headers[strtolower($name)] = is_array($value) ? array_map('strval', $value) : [ (string) $value ];
         }

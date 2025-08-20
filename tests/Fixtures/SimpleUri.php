@@ -8,11 +8,8 @@ use Psr\Http\Message\UriInterface;
 
 final class SimpleUri implements UriInterface
 {
-    private string $uri;
-
-    public function __construct(string $uri)
+    public function __construct(private string $uri)
     {
-        $this->uri = $uri;
     }
 
     public function __toString(): string { return $this->uri; }

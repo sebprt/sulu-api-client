@@ -6,9 +6,9 @@ namespace Sulu\ApiClient\Auth;
 
 use Psr\Http\Message\RequestInterface;
 
-final class BearerTokenAuthenticator implements RequestAuthenticatorInterface
+final readonly class BearerTokenAuthenticator implements RequestAuthenticatorInterface
 {
-    public function __construct(private readonly string $token)
+    public function __construct(private string $token)
     {
     }
 

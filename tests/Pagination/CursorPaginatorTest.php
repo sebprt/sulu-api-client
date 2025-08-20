@@ -36,8 +36,6 @@ final class CursorPaginatorTest extends TestCase
     public function testInvalidLimitThrows(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        new CursorPaginator(0, function (?string $cursor, int $limit): CursorPage {
-            return new CursorPage([], null);
-        });
+        new CursorPaginator(0, fn(?string $cursor, int $limit): CursorPage => new CursorPage([], null));
     }
 }

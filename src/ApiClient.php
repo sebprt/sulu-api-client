@@ -13,14 +13,14 @@ use Sulu\ApiClient\Pagination\CursorPage;
 use Sulu\ApiClient\Pagination\CursorPaginator;
 use Sulu\ApiClient\Serializer\SerializerInterface;
 
-final class ApiClient
+final readonly class ApiClient
 {
     public function __construct(
-        private readonly HttpClientInterface $http,
-        private readonly RequestFactoryInterface $requestFactory,
-        private readonly SerializerInterface $serializer,
-        private readonly RequestAuthenticatorInterface $authenticator,
-        private readonly string $baseUrl,
+        private HttpClientInterface $http,
+        private RequestFactoryInterface $requestFactory,
+        private SerializerInterface $serializer,
+        private RequestAuthenticatorInterface $authenticator,
+        private string $baseUrl,
     ) {
     }
 
@@ -56,11 +56,11 @@ final class ApiClient
     {
         // duck-typing against generated endpoints API: request(...): ResponseInterface and parseResponse(ResponseInterface): mixed
         /** @var callable $request */
-        $request = [$endpoint, 'request'];
+        $request = $endpoint->request(...);
         /** @var ResponseInterface $response */
         $response = $request($parameters, $query, $body);
         /** @var callable $parse */
-        $parse = [$endpoint, 'parseResponse'];
+        $parse = $endpoint->parseResponse(...);
 
         return $parse($response);
     }
@@ -169,7 +169,7 @@ final class ApiClient
             /* @return CursorPage<array<string,mixed>> */
             pageFetcher: function (?string $cursor, int $limit) use ($endpoint, $embeddedKey, $parameters, $baseQuery): CursorPage {
                 /** @var callable $request */
-                $request = [$endpoint, 'request'];
+                $request = $endpoint->request(...);
                 $query = array_merge($baseQuery, ['limit' => $limit]);
                 if (null !== $cursor) {
                     $query['cursor'] = $cursor;
@@ -177,7 +177,7 @@ final class ApiClient
                 /** @var ResponseInterface $response */
                 $response = $request($parameters, $query, null);
                 /** @var callable $parse */
-                $parse = [$endpoint, 'parseResponse'];
+                $parse = $endpoint->parseResponse(...);
                 $data = $parse($response);
 
                 $items = [];

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Sulu\ApiClient\Serializer;
 
-final class JsonSerializer implements SerializerInterface
+final readonly class JsonSerializer implements SerializerInterface
 {
     public function __construct(
-        private readonly int $encodeFlags = JSON_THROW_ON_ERROR,
-        private readonly int $decodeFlags = JSON_THROW_ON_ERROR | JSON_BIGINT_AS_STRING,
-        private readonly int $depth = 512,
+        private int $encodeFlags = JSON_THROW_ON_ERROR,
+        private int $decodeFlags = JSON_THROW_ON_ERROR | JSON_BIGINT_AS_STRING,
+        private int $depth = 512,
     ) {
     }
 

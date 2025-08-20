@@ -10,17 +10,11 @@ namespace Sulu\ApiClient\Exception;
 class ApiException extends \Exception
 {
     /**
-     * @var array<string, mixed>|null
-     */
-    private ?array $responseData;
-
-    /**
      * @param array<string, mixed>|null $responseData
      */
-    public function __construct(string $message = '', int $code = 0, ?\Throwable $previous = null, ?array $responseData = null)
+    public function __construct(string $message = '', int $code = 0, ?\Throwable $previous = null, private readonly ?array $responseData = null)
     {
         parent::__construct($message, $code, $previous);
-        $this->responseData = $responseData;
     }
 
     /**
