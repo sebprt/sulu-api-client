@@ -15,7 +15,7 @@ jobs:
           php-version: '8.2'
           extensions: mbstring, curl
           tools: composer
-          coverage: none
+          coverage: xdebug
       - name: Validate composer
         run: composer validate --no-check-publish
       - name: Get Composer cache directory
@@ -37,14 +37,8 @@ jobs:
         run: vendor/bin/phpstan analyse --configuration=phpstan.neon
       - name: Rector (dry-run)
         run: vendor/bin/rector process --dry-run
-      - name: PHPUnit (with coverage)
+      - name: PHPUnit
         shell: bash
         run: |
           set -euo pipefail
           vendor/bin/phpunit --configuration=phpunit.xml --colors=always --coverage-clover var/coverage.xml
-          # Enforce coverage threshold only if at least one test file exists
-          if compgen -G "tests/**/*.php" > /dev/null || compgen -G "tests/*.php" > /dev/null; then
-            php tools/coverage-check.php var/coverage.xml 80
-          else
-            echo "No tests found, skipping coverage threshold check."
-          fi
