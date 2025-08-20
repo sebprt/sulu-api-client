@@ -7,16 +7,15 @@ namespace Sulu\ApiClient\Pagination;
 /**
  * @template T
  */
-final class Page
+final class CursorPage
 {
     /**
-     * @param list<T> $items
+     * @param list<T>     $items
+     * @param string|null $nextCursor the cursor for the next page; null indicates the end
      */
     public function __construct(
         public readonly array $items,
-        public readonly int $page,
-        public readonly int $limit,
-        public readonly ?int $total = null,
+        public readonly ?string $nextCursor,
     ) {
     }
 }

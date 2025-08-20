@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Sulu\ApiClient\Exception;
 
 use Exception;
@@ -7,20 +9,17 @@ use Exception;
 /**
  * Exception thrown when an API request fails.
  */
-class ApiException extends Exception
+class ApiException extends \Exception
 {
     /**
-     * @var array|null
+     * @var array<string, mixed>|null
      */
-    private $responseData;
+    private ?array $responseData;
 
     /**
-     * @param string $message
-     * @param int $code
-     * @param Exception|null $previous
-     * @param array|null $responseData
+     * @param array<string, mixed>|null $responseData
      */
-    public function __construct($message = "", $code = 0, Exception $previous = null, $responseData = null)
+    public function __construct(string $message = '', int $code = 0, ?\Throwable $previous = null, ?array $responseData = null)
     {
         parent::__construct($message, $code, $previous);
         $this->responseData = $responseData;
@@ -29,9 +28,9 @@ class ApiException extends Exception
     /**
      * Get the response data if available.
      *
-     * @return array|null
+     * @return array<string, mixed>|null
      */
-    public function getResponseData()
+    public function getResponseData(): ?array
     {
         return $this->responseData;
     }

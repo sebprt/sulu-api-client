@@ -6,7 +6,6 @@ namespace Sulu\ApiClient\Endpoint;
 
 final class SuluPutCollaborationsEndpoint extends AbstractEndpoint
 {
-
     protected const METHOD = 'PUT';
     protected const PATH_TEMPLATE = '/admin/api/collaborations.{_format}';
 }

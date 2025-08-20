@@ -6,7 +6,6 @@ namespace Sulu\ApiClient\Endpoint;
 
 final class SuluPatchUserEndpoint extends AbstractEndpoint
 {
-
     protected const METHOD = 'PATCH';
     protected const PATH_TEMPLATE = '/admin/api/users/{id}.{_format}';
 }

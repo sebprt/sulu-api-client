@@ -6,7 +6,6 @@ namespace Sulu\ApiClient\Endpoint;
 
 final class SuluGetAccountContactsEndpoint extends AbstractEndpoint
 {
-
     protected const METHOD = 'GET';
     protected const PATH_TEMPLATE = '/admin/api/accounts/{id}/contacts.{_format}';
 }

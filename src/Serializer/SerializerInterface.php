@@ -10,7 +10,9 @@ interface SerializerInterface
 
     /**
      * @template T
+     *
      * @param class-string<T>|null $type
+     *
      * @return T|mixed
      */
     public function deserialize(string $payload, string $format = 'json', ?string $type = null): mixed;

@@ -6,7 +6,6 @@ namespace Sulu\ApiClient\Endpoint;
 
 final class SuluPostContactEndpoint extends AbstractEndpoint
 {
-
     protected const METHOD = 'POST';
     protected const PATH_TEMPLATE = '/admin/api/contacts.{_format}';
 }

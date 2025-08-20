@@ -16,30 +16,38 @@ final class SessionCookieAuthenticator implements RequestAuthenticatorInterface
 
     /**
      * @param array<string,string>|string $cookies Either an associative array of cookies or a single cookie name
-     * @param string|null $value Value for the single cookie if $cookies is a string
+     * @param string|null                 $value   Value for the single cookie if $cookies is a string
      */
     public function __construct(array|string $cookies, ?string $value = null)
     {
         if (is_string($cookies)) {
-            $this->cookies = [$cookies => (string)($value ?? '')];
+            if ('' === $cookies) {
+                throw new \InvalidArgumentException('Cookie name must not be empty');
+            }
+            $this->cookies = [$cookies => (string) ($value ?? '')];
         } else {
+            foreach ($cookies as $name => $_) {
+                if ('' === $name) {
+                    throw new \InvalidArgumentException('Cookie name must not be empty');
+                }
+            }
             $this->cookies = $cookies;
         }
     }
 
     public function authenticate(RequestInterface $request): RequestInterface
     {
-        if ($this->cookies === []) {
+        if ([] === $this->cookies) {
             return $request;
         }
 
         // Build cookie string
         $parts = [];
         foreach ($this->cookies as $name => $val) {
-            if ($name === '') {
+            if ('' === $name) {
                 continue;
             }
-            $parts[] = rawurlencode((string)$name) . '=' . rawurlencode((string)$val);
+            $parts[] = rawurlencode((string) $name).'='.rawurlencode((string) $val);
         }
         if (empty($parts)) {
             return $request;
@@ -52,7 +60,7 @@ final class SessionCookieAuthenticator implements RequestAuthenticatorInterface
             // Concatenate existing cookie header(s)
             $existingStr = implode('; ', $existing);
             // Avoid duplicate separators
-            $cookieString = rtrim($existingStr, '; ') . '; ' . $cookieString;
+            $cookieString = rtrim($existingStr, '; ').'; '.$cookieString;
         }
 
         return $request->withHeader('Cookie', $cookieString);

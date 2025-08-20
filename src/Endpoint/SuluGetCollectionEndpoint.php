@@ -6,7 +6,6 @@ namespace Sulu\ApiClient\Endpoint;
 
 final class SuluGetCollectionEndpoint extends AbstractEndpoint
 {
-
     protected const METHOD = 'GET';
     protected const PATH_TEMPLATE = '/admin/api/collections/{id}.{_format}';
 }

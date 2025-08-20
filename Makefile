@@ -10,4 +10,8 @@ test:
 
 qa:
 	vendor/bin/phpstan analyse --configuration=phpstan.neon
-	vendor/bin/rector process --dry-run
+	@if [ -x vendor/bin/rector ]; then \
+		vendor/bin/rector process --dry-run; \
+	else \
+		echo "Rector not installed, skipping"; \
+	fi

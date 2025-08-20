@@ -6,22 +6,45 @@ namespace Sulu\ApiClient\Serializer;
 
 final class JsonSerializer implements SerializerInterface
 {
+    public function __construct(
+        private readonly int $encodeFlags = JSON_THROW_ON_ERROR,
+        private readonly int $decodeFlags = JSON_THROW_ON_ERROR | JSON_BIGINT_AS_STRING,
+        private readonly int $depth = 512,
+    ) {
+    }
+
     public function serialize(mixed $data, string $format = 'json'): string
     {
-        if ($format !== 'json') {
+        if ('json' !== $format) {
             throw new \InvalidArgumentException('Only json format is supported');
         }
-        $json = json_encode($data, JSON_THROW_ON_ERROR);
-        return $json;
+        $json = json_encode($data, $this->encodeFlags, $this->depth);
+        if (($this->encodeFlags & JSON_THROW_ON_ERROR) === 0) {
+            $err = json_last_error();
+            if (JSON_ERROR_NONE !== $err) {
+                throw new \JsonException(json_last_error_msg(), $err);
+            }
+        }
+
+        return (string) $json;
     }
 
     public function deserialize(string $payload, string $format = 'json', ?string $type = null): mixed
     {
-        if ($format !== 'json') {
+        if ('json' !== $format) {
             throw new \InvalidArgumentException('Only json format is supported');
         }
-        $decoded = $payload === '' ? null : json_decode($payload, true, 512, JSON_THROW_ON_ERROR);
-        // Simple pass-through until Symfony Serializer is wired
+        if ('' === $payload) {
+            return null;
+        }
+        $decoded = json_decode($payload, true, $this->depth, $this->decodeFlags);
+        if (($this->decodeFlags & JSON_THROW_ON_ERROR) === 0) {
+            $err = json_last_error();
+            if (JSON_ERROR_NONE !== $err) {
+                throw new \JsonException(json_last_error_msg(), $err);
+            }
+        }
+
         return $decoded;
     }
 }

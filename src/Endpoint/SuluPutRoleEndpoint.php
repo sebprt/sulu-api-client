@@ -6,7 +6,6 @@ namespace Sulu\ApiClient\Endpoint;
 
 final class SuluPutRoleEndpoint extends AbstractEndpoint
 {
-
     protected const METHOD = 'PUT';
     protected const PATH_TEMPLATE = '/admin/api/roles/{id}.{_format}';
 }

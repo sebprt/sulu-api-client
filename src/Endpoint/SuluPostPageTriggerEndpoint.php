@@ -6,7 +6,6 @@ namespace Sulu\ApiClient\Endpoint;
 
 final class SuluPostPageTriggerEndpoint extends AbstractEndpoint
 {
-
     protected const METHOD = 'POST';
     protected const PATH_TEMPLATE = '/admin/api/pages/{id}.{_format}';
 }

@@ -6,7 +6,6 @@ namespace Sulu\ApiClient\Endpoint;
 
 final class SuluDeleteWebspaceAnalyticsEndpoint extends AbstractEndpoint
 {
-
     protected const METHOD = 'DELETE';
     protected const PATH_TEMPLATE = '/admin/api/webspaces/{webspace}/analytics.{_format}';
 }

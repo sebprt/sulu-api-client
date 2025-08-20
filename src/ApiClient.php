@@ -8,12 +8,9 @@ use Psr\Http\Client\ClientInterface as HttpClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Sulu\ApiClient\Auth\RequestAuthenticatorInterface;
-use Sulu\ApiClient\Exception\ApiException;
-use Sulu\ApiClient\Exception\NotFoundException;
-use Sulu\ApiClient\Exception\ValidationException;
+use Sulu\ApiClient\Pagination\CursorPage;
+use Sulu\ApiClient\Pagination\CursorPaginator;
 use Sulu\ApiClient\Serializer\SerializerInterface;
-use Sulu\ApiClient\Pagination\Page;
-use Sulu\ApiClient\Pagination\Paginator;
 
 final class ApiClient
 {
@@ -26,12 +23,13 @@ final class ApiClient
     ) {
     }
 
-
     /**
      * Create an endpoint instance with the client dependencies wired.
      *
      * @template T of object
+     *
      * @param class-string<T> $endpointClass
+     *
      * @return T
      */
     public function createEndpoint(string $endpointClass): object
@@ -48,16 +46,21 @@ final class ApiClient
 
     /**
      * Factory to instantiate any generated endpoint class with the client dependencies wired.
+     *
      * @deprecated Use createEndpoint() instead. Will be removed in a future major version.
      *
      * @template T of object
-     * @param class-string<T> $endpointClass
+     *
      * @return T
      */
 
     /**
      * Send the request defined by the given endpoint and return the parsed response.
      * Performs request(...) then parseResponse(...).
+     */
+    /**
+     * @param array<string, mixed> $parameters
+     * @param array<string, mixed> $query
      */
     private function sendEndpointRequest(object $endpoint, array $parameters = [], array $query = [], mixed $body = null): mixed
     {
@@ -68,12 +71,16 @@ final class ApiClient
         $response = $request($parameters, $query, $body);
         /** @var callable $parse */
         $parse = [$endpoint, 'parseResponse'];
+
         return $parse($response);
     }
 
     /**
      * CRUD-style helper: Create a resource using the given endpoint.
      * Semantics are provided by the chosen endpoint (typically POST).
+     *
+     * @param array<string, mixed> $parameters
+     * @param array<string, mixed> $query
      */
     public function create(object $endpoint, array $parameters = [], array $query = [], mixed $body = null): mixed
     {
@@ -83,6 +90,9 @@ final class ApiClient
     /**
      * CRUD-style helper: Read a resource (or collection) using the given endpoint.
      * Typically maps to GET endpoints; body is ignored.
+     *
+     * @param array<string, mixed> $parameters
+     * @param array<string, mixed> $query
      */
     public function read(object $endpoint, array $parameters = [], array $query = []): mixed
     {
@@ -92,6 +102,9 @@ final class ApiClient
     /**
      * CRUD-style helper: Update a resource using the given endpoint.
      * Semantics are provided by the chosen endpoint (typically PATCH).
+     *
+     * @param array<string, mixed> $parameters
+     * @param array<string, mixed> $query
      */
     public function update(object $endpoint, array $parameters = [], array $query = [], mixed $body = null): mixed
     {
@@ -101,6 +114,9 @@ final class ApiClient
     /**
      * CRUD-style helper: Upsert a resource (create or replace) using the given endpoint.
      * Typically maps to PUT endpoints when supported by the API.
+     *
+     * @param array<string, mixed> $parameters
+     * @param array<string, mixed> $query
      */
     public function upsert(object $endpoint, array $parameters = [], array $query = [], mixed $body = null): mixed
     {
@@ -110,6 +126,9 @@ final class ApiClient
     /**
      * CRUD-style helper: Delete a resource using the given endpoint.
      * Typically maps to DELETE endpoints; body is ignored.
+     *
+     * @param array<string, mixed> $parameters
+     * @param array<string, mixed> $query
      */
     public function delete(object $endpoint, array $parameters = [], array $query = []): mixed
     {
@@ -119,12 +138,15 @@ final class ApiClient
     /**
      * CRUD-style helper: List resources using a collection endpoint.
      * Provides a safer name than `list()` to avoid clashing with PHP language construct.
+     *
+     * @param array<string, mixed> $parameters
+     * @param array<string, mixed> $query
      */
     public function list(object $endpoint, array $parameters = [], array $query = [], ?string $embeddedKey = null, int $limit = 50): mixed
     {
-        if ($embeddedKey !== null) {
-            // Return a paginator that will iterate across all pages using the provided embedded key
-            return $this->paginateEmbeddedCollection(
+        if (null !== $embeddedKey) {
+            // Return a cursor paginator that will iterate across all pages using the provided embedded key
+            return $this->paginateEmbeddedCursorCollection(
                 $endpoint,
                 embeddedKey: $embeddedKey,
                 parameters: $parameters,
@@ -137,43 +159,65 @@ final class ApiClient
         return $this->sendEndpointRequest($endpoint, $parameters, $query, null);
     }
 
-
     /**
-     * Build a Paginator around any endpoint that supports page/limit query parameters
-     * and returns a payload with optional 'total' and collection under _embedded[$embeddedKey].
+     * Build a CursorPaginator around any endpoint that supports cursor/limit query parameters
+     * and returns a payload with the collection under _embedded[$embeddedKey] and a next cursor
+     * at either top-level 'nextCursor', under _links.next.cursor, or within _links.next.href query.
      *
-     * @template T of array
-     * @param object $endpoint the endpoint instance created via $this->createEndpoint(...)
-     * @param string $embeddedKey key inside _embedded where items live, e.g. 'tags'
-     * @param array<string,mixed> $parameters path/format parameters for the endpoint
-     * @param array<string,mixed> $baseQuery base query to always pass (besides page & limit)
-     * @return Paginator<T>
+     * @param object              $endpoint      the endpoint instance created via $this->createEndpoint(...)
+     * @param string              $embeddedKey   key inside _embedded where items live, e.g. 'tags'
+     * @param array<string,mixed> $parameters    path/format parameters for the endpoint
+     * @param array<string,mixed> $baseQuery     base query to always pass (besides cursor & limit)
+     * @param string|null         $initialCursor starting cursor, or null to start from beginning
+     *
+     * @return CursorPaginator<array<string,mixed>>
      */
-    private function paginateEmbeddedCollection(object $endpoint, string $embeddedKey, array $parameters = [], array $baseQuery = [], int $limit = 50): Paginator
+    public function paginateEmbeddedCursorCollection(object $endpoint, string $embeddedKey, array $parameters = [], array $baseQuery = [], int $limit = 50, ?string $initialCursor = null): CursorPaginator
     {
-        return new Paginator(
+        return new CursorPaginator(
             limit: $limit,
-            pageFetcher: function (int $page, int $limit) use ($endpoint, $embeddedKey, $parameters, $baseQuery): Page {
+            /* @return CursorPage<array<string,mixed>> */
+            pageFetcher: function (?string $cursor, int $limit) use ($endpoint, $embeddedKey, $parameters, $baseQuery): CursorPage {
                 /** @var callable $request */
                 $request = [$endpoint, 'request'];
+                $query = array_merge($baseQuery, ['limit' => $limit]);
+                if (null !== $cursor) {
+                    $query['cursor'] = $cursor;
+                }
                 /** @var ResponseInterface $response */
-                $response = $request($parameters, array_merge($baseQuery, ['page' => $page, 'limit' => $limit]), null);
+                $response = $request($parameters, $query, null);
                 /** @var callable $parse */
                 $parse = [$endpoint, 'parseResponse'];
                 $data = $parse($response);
+
                 $items = [];
-                $total = null;
+                $nextCursor = null;
                 if (is_array($data)) {
                     $embedded = $data['_embedded'][$embeddedKey] ?? null;
                     if (is_array($embedded)) {
                         $items = array_values($embedded);
                     }
-                    if (array_key_exists('total', $data) && $data['total'] !== null) {
-                        $total = (int)$data['total'];
+                    // Preferred: top-level nextCursor
+                    if (isset($data['nextCursor']) && is_string($data['nextCursor']) && '' !== $data['nextCursor']) {
+                        $nextCursor = $data['nextCursor'];
+                    } elseif (isset($data['_links']['next']['cursor']) && is_string($data['_links']['next']['cursor']) && '' !== $data['_links']['next']['cursor']) {
+                        $nextCursor = $data['_links']['next']['cursor'];
+                    } elseif (isset($data['_links']['next']['href']) && is_string($data['_links']['next']['href'])) {
+                        // Try to parse cursor query parameter from href
+                        $href = $data['_links']['next']['href'];
+                        $parts = parse_url($href);
+                        if (isset($parts['query'])) {
+                            parse_str($parts['query'], $q);
+                            if (isset($q['cursor']) && is_string($q['cursor']) && '' !== $q['cursor']) {
+                                $nextCursor = $q['cursor'];
+                            }
+                        }
                     }
                 }
-                return new Page($items, $page, $limit, $total);
-            }
+
+                return new CursorPage($items, $nextCursor);
+            },
+            initialCursor: $initialCursor,
         );
     }
 }

@@ -6,7 +6,6 @@ namespace Sulu\ApiClient\Endpoint;
 
 final class SuluDeleteArticlesEndpoint extends AbstractEndpoint
 {
-
     protected const METHOD = 'DELETE';
     protected const PATH_TEMPLATE = '/admin/api/articles.{_format}';
 }

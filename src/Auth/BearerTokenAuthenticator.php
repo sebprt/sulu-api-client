@@ -14,6 +14,6 @@ final class BearerTokenAuthenticator implements RequestAuthenticatorInterface
 
     public function authenticate(RequestInterface $request): RequestInterface
     {
-        return $request->withHeader('Authorization', 'Bearer ' . $this->token);
+        return $request->withHeader('Authorization', 'Bearer '.$this->token);
     }
 }
