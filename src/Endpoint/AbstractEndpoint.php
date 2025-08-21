@@ -118,6 +118,17 @@ abstract class AbstractEndpoint implements EndpointInterface
         $body = (string) $response->getBody();
         $contentType = $response->getHeaderLine('Content-Type');
 
+        $data = $this->parseJsonBody($body, $contentType, $status);
+
+        if ($status >= 200 && $status < 300) {
+            return $this->handleSuccessResponse($status, $data, $body);
+        }
+
+        $this->throwHttpException($status, $data, $response);
+    }
+
+    private function parseJsonBody(string $body, string $contentType, int $status): mixed
+    {
         $data = null;
         $isJson = $this->contentTypeMatcher->isJson($contentType);
         if ('' !== $body && $isJson) {
@@ -133,72 +144,74 @@ abstract class AbstractEndpoint implements EndpointInterface
             }
         }
 
-        // Success responses (2xx)
-        if ($status >= 200 && $status < 300) {
-            // 204/205 No Content: return null consistently
-            if (204 === $status || 205 === $status) {
-                return null;
+        return $data;
+    }
+
+    private function handleSuccessResponse(int $status, mixed $data, string $body): mixed
+    {
+        // 204/205 No Content: return null consistently
+        if (204 === $status || 205 === $status) {
+            return null;
+        }
+        // Return parsed data when available, otherwise raw body for non-JSON success
+        if (null !== $data) {
+            return $data;
+        }
+        if ('' === $body) {
+            return null;
+        }
+
+        return $body;
+    }
+
+    private function throwHttpException(int $status, mixed $data, ResponseInterface $response): never
+    {
+        $errorMessage = $this->extractErrorMessage($data);
+        
+        throw match ($status) {
+            400, 422 => new ValidationException($errorMessage ?: 'Validation error', $status),
+            401 => new UnauthorizedException($errorMessage ?: 'Unauthorized', $status),
+            403 => new ForbiddenException($errorMessage ?: 'Forbidden', $status),
+            404 => new NotFoundException($errorMessage ?: 'Resource not found', $status),
+            405 => new MethodNotAllowedException($errorMessage ?: 'Method Not Allowed', $status),
+            409 => new ConflictException($errorMessage ?: 'Conflict', $status),
+            412 => new PreconditionFailedException($errorMessage ?: 'Precondition Failed', $status),
+            415 => new UnsupportedMediaTypeException($errorMessage ?: 'Unsupported Media Type', $status),
+            429 => new TooManyRequestsException($this->buildTooManyRequestsMessage($errorMessage, $response), $status),
+            default => match (true) {
+                $status >= 300 && $status < 400 => new RedirectionException($errorMessage ?: 'Unexpected redirection', $status),
+                $status >= 500 && $status < 600 => new ServerErrorException($errorMessage ?: 'Server error', $status),
+                default => new UnexpectedResponseException($errorMessage ?: 'Unexpected response', $status),
             }
-            // Return parsed data when available, otherwise raw body for non-JSON success
-            if (null !== $data) {
-                return $data;
-            }
-            if ('' === $body) {
-                return null;
-            }
+        };
+    }
 
-            return $body;
+    private function buildTooManyRequestsMessage(?string $errorMessage, ResponseInterface $response): string
+    {
+        $message = $errorMessage ?: 'Too Many Requests';
+        $retryAfter = $response->getHeaderLine('Retry-After');
+        
+        if ($retryAfter !== '') {
+            $message .= ', retry after ' . $retryAfter;
         }
+        
+        return $message;
+    }
 
-        $status = $response->getStatusCode();
-        if (400 === $status) {
-            throw new ValidationException('Bad Request', $status);
+    private function extractErrorMessage(mixed $data): ?string
+    {
+        if (is_array($data)) {
+            return $data['message'] ?? $data['error'] ?? $data['detail'] ?? null;
         }
-
-        if (401 === $status) {
-            throw new UnauthorizedException('Unauthorized', $status);
+        if (is_object($data) && property_exists($data, 'message')) {
+            return $data->message;
         }
-
-        if (403 === $status) {
-            throw new ForbiddenException('Forbidden', $status);
+        if (is_object($data) && property_exists($data, 'error')) {
+            return $data->error;
         }
-
-        if (404 === $status) {
-            throw new NotFoundException('Resource not found', $status);
+        if (is_object($data) && property_exists($data, 'detail')) {
+            return $data->detail;
         }
-
-        if (405 === $status) {
-            throw new MethodNotAllowedException('Method Not Allowed', $status);
-        }
-
-        if (409 === $status) {
-            throw new ConflictException('Conflict', $status);
-        }
-
-        if (412 === $status) {
-            throw new PreconditionFailedException('Precondition Failed', $status);
-        }
-
-        if (415 === $status) {
-            throw new UnsupportedMediaTypeException('Unsupported Media Type', $status);
-        }
-
-        if (422 === $status) {
-            throw new ValidationException('Validation error', $status);
-        }
-
-        if (429 === $status) {
-            throw new TooManyRequestsException('Too Many Requests. Retry later', 429);
-        }
-
-        if ($status >= 300 && $status < 400) {
-            throw new RedirectionException('Unexpected redirection', $status);
-        }
-
-        if ($status >= 500 && $status < 600) {
-            throw new ServerErrorException('Server error', $status);
-        }
-
-        throw new ApiException( 'API error', $status);
+        return null;
     }
 }
