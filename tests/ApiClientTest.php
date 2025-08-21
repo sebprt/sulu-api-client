@@ -42,12 +42,12 @@ final class ApiClientTest extends TestCase
         };
     }
 
-    public function testCreateEndpointInstantiatesClass(): void
+    public function testEndpointFactoryCreatesInstances(): void
     {
         $http = new class implements ClientInterface { public function sendRequest(RequestInterface $request): ResponseInterface { return new SimpleResponse(200); } };
         $client = new ApiClient($http, $this->psr17(), $this->serializer(), $this->auth(), 'https://api.test');
 
-        $endpoint = $client->createEndpoint(\Sulu\ApiClient\Endpoint\SuluDeleteAccountEndpoint::class);
+        $endpoint = $client->getEndpointFactory()->create(\Sulu\ApiClient\Endpoint\SuluDeleteAccountEndpoint::class);
 
         self::assertInstanceOf(\Sulu\ApiClient\Endpoint\SuluDeleteAccountEndpoint::class, $endpoint);
     }

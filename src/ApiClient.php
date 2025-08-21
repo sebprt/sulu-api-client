@@ -9,6 +9,8 @@ use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Sulu\ApiClient\Auth\RequestAuthenticatorInterface;
 use Sulu\ApiClient\Endpoint\EndpointInterface;
+use Sulu\ApiClient\Endpoint\Factory\EndpointFactory;
+use Sulu\ApiClient\Endpoint\Factory\EndpointFactoryInterface;
 use Sulu\ApiClient\Endpoint\Helper\ContentTypeMatcherInterface;
 use Sulu\ApiClient\Endpoint\Helper\DefaultContentTypeMatcher;
 use Sulu\ApiClient\Pagination\CursorPage;
@@ -17,6 +19,8 @@ use Sulu\ApiClient\Serializer\SerializerInterface;
 
 final readonly class ApiClient
 {
+    private EndpointFactoryInterface $endpointFactory;
+
     public function __construct(
         private HttpClientInterface $http,
         private RequestFactoryInterface $requestFactory,
@@ -24,22 +28,9 @@ final readonly class ApiClient
         private RequestAuthenticatorInterface $authenticator,
         private string $baseUrl,
         private ContentTypeMatcherInterface $contentTypeMatcher = new DefaultContentTypeMatcher(),
+        ?EndpointFactoryInterface $endpointFactory = null,
     ) {
-    }
-
-    /**
-     * Create an endpoint instance with the client dependencies wired.
-     *
-     * @template T of object
-     *
-     * @param class-string<T> $endpointClass
-     *
-     * @return T
-     */
-    public function createEndpoint(string $endpointClass): object
-    {
-        // All generated endpoints have the same constructor signature
-        return new $endpointClass(
+        $this->endpointFactory = $endpointFactory ?? new EndpointFactory(
             $this->http,
             $this->requestFactory,
             $this->serializer,
@@ -47,6 +38,14 @@ final readonly class ApiClient
             $this->contentTypeMatcher,
             $this->baseUrl,
         );
+    }
+
+    /**
+     * Get the endpoint factory instance.
+     */
+    public function getEndpointFactory(): EndpointFactoryInterface
+    {
+        return $this->endpointFactory;
     }
 
     /**
@@ -157,7 +156,7 @@ final readonly class ApiClient
      * and returns a payload with the collection under _embedded[$embeddedKey] and a next cursor
      * at either top-level 'nextCursor', under _links.next.cursor, or within _links.next.href query.
      *
-     * @param EndpointInterface   $endpoint      the endpoint instance created via $this->createEndpoint(...)
+     * @param EndpointInterface   $endpoint      the endpoint instance created via $this->getEndpointFactory()->create(...)
      * @param string              $embeddedKey   key inside _embedded where items live, e.g. 'tags'
      * @param array<string,mixed> $parameters    path/format parameters for the endpoint
      * @param array<string,mixed> $baseQuery     base query to always pass (besides cursor & limit)
